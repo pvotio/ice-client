@@ -1,6 +1,6 @@
 # ICE Data CDS Settlement Prices
 
-Scrape, transform, and insert ICE (Intercontinental Exchange) CDS settlement prices into an MSSQL database, with Docker support for easy deployment and scaling. Sttlemnet prices are converted to spreads using the ISDA Model.
+Scrape, transform, and insert ICE (Intercontinental Exchange) CDS settlement prices into an MSSQL database, with Docker support for easy deployment and scaling. Settlement prices are converted to spreads using the ISDA Model.
 
 
 ## 📌 Features:
