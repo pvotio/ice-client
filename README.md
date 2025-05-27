@@ -120,10 +120,3 @@ Logs will report:
 ## License
 
 This software is provided under the MIT License. Users must independently verify their right to access and use ICE-published data.
-
-## Potential Enhancements
-
-- Add support for historical archiving
-- Store raw HTML snapshots for audit trail
-- Enable alerts on structural changes to the source table
-- Integrate export to cloud storage (e.g., S3, Azure Blob)
