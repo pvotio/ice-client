@@ -1,63 +1,129 @@
-# ICE Data CDS Settlement Prices
+# ICE CDS Pricing Data Pipeline
 
-Scrape, transform, and insert ICE (Intercontinental Exchange) CDS settlement prices into an MSSQL database, with Docker support for easy deployment and scaling. Settlement prices are converted to spreads using the ISDA Model.
+This project provides an automated pipeline for collecting and storing **Credit Default Swap (CDS) single-name settlement prices** published by the **Intercontinental Exchange (ICE)**. It scrapes structured pricing data from the ICE public pricing page, transforms the content into a standardized format, and loads it into a Microsoft SQL Server database.
 
+## Overview
 
-## 📌 Features:
+### Objective
 
-- **Efficient Scraping:** Targets the Markit ICE Settlement Prices from ICE's official page.
-- **Data Transformation:** Tailored data transformation for easy database insertion.
-- **MSSQL Support:** Built-in support to insert data into a Microsoft SQL Server database.
-- **Dockerized:** Simplified deployment and setup using Docker.
-- **Robust Error Handling:** Multi-retry mechanisms and comprehensive logging.
+This pipeline is designed to:
 
+- Extract CDS settlement prices published by ICE.
+- Parse and normalize the data into structured tabular form.
+- Insert the clean dataset into a SQL Server table for consumption by internal systems.
 
-## Getting Started:
+This system is ideal for firms requiring reliable access to third-party CDS price curves to support trading, risk management, and compliance workflows.
 
-### Environment Setup
+## Data Source
 
-1. Clone the repository:
-   ``` bash 
-    git clone git@github.com:alimghmi/ice-client.git
-    cd ice-client
-   ```
-2. Create an `.env` file in the project root and configure the following:
-   ```
-    URL="https://www.ice.com/public-web/cds-settlement-prices/icc/single-names"
-    LOG_LEVEL="INFO"
-    OUTPUT_TABLE=<name_of_the_output_table>
-    INSERTER_MAX_RETRIES=2
-    REQUEST_MAX_RETRIES=3
-    REQUEST_BACKOFF_FACTOR=2
-    MSSQL_SERVER=<mssql_server>
-    MSSQL_DATABASE=<mssql_database>
-    MSSQL_USERNAME=<mssql_username>
-    MSSQL_PASSWORD=<mssql_password>
-   ```
-    Replace the placeholders (`<...>`) with the appropriate values.
+The primary source for this pipeline is the ICE public data page:
 
-### Running with Python
+https://www.ice.com/api/cds-settlement-prices/icc-single-names
 
-1. Install the required packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. Run the `main.py` script:
-   ```bash
-   python main.py
-   ```
+This page contains structured tables covering:
 
-### Running with Docker
+- CDS Single Names
+- Pricing curves by contract, tier, maturity
+- Contractual reference entities and market conventions
 
-1. Build the Docker image:
-   ```bash
-   docker build -t ice-data-scraper .
-   ```
-2. Run the Docker container:
-   ```bash
-   docker run --env-file .env ice-data-scraper
-   ```
+The scraper dynamically pulls tabular data from this URL and processes it into a standardized form suitable for database ingestion.
 
-## Contribution
+## Pipeline Flow
 
-Feel free to fork the repository, make changes, and open a pull request. All contributions are welcomed!
+The pipeline follows a straightforward execution flow:
+
+1. **Scraper Initialization**  
+   Configures a retry-enabled HTTP scraper with exponential backoff.
+
+2. **Data Fetching**  
+   Pulls the pricing table data from the ICE endpoint.
+
+3. **Data Transformation**  
+   Cleans, renames, and prepares the DataFrame using the `transformer.Agent`.
+
+4. **Database Insertion**  
+   Inserts the transformed records into a specified SQL Server table using `fast-to-sql`.
+
+## Project Structure
+
+```
+ice-client-main/
+├── main.py                   # Pipeline entrypoint
+├── config/                   # Logger and environment config
+│   └── settings.py
+├── database/                 # Database connection and insertion modules
+├── scraper/                  # ICE scraping engine
+├── transformer/              # Data transformation logic
+├── utils/                    # Inserter abstraction layer
+├── .env.sample               # Configuration template
+├── Dockerfile                # Containerization support
+├── requirements.txt          # Python dependency list
+```
+
+## Configuration
+
+Use the `.env.sample` file to create your `.env`. The following variables are required:
+
+| Variable | Description |
+|----------|-------------|
+| `URL` | ICE data endpoint URL |
+| `LOG_LEVEL` | Logging level (e.g., INFO, DEBUG) |
+| `OUTPUT_TABLE` | SQL Server target table |
+| `INSERTER_MAX_RETRIES` | Number of retry attempts for failed DB inserts |
+| `REQUEST_MAX_RETRIES` | Retry attempts for failed HTTP requests |
+| `REQUEST_BACKOFF_FACTOR` | Backoff multiplier between retries |
+| `MSSQL_SERVER` | SQL Server address |
+| `MSSQL_DATABASE` | Target database |
+| `MSSQL_USERNAME` / `MSSQL_PASSWORD` | Authentication credentials |
+
+## Docker Support
+
+The pipeline can be containerized for consistent execution in CI/CD pipelines.
+
+### Build the container
+```bash
+docker build -t ice-client .
+```
+
+### Run with configuration
+```bash
+docker run --env-file .env ice-client
+```
+
+## Installation
+
+To install locally:
+
+```bash
+pip install -r requirements.txt
+```
+
+Primary dependencies:
+- `requests`, `lxml`: HTML data scraping
+- `pandas`: Data transformation
+- `SQLAlchemy`, `pyodbc`: SQL Server integration
+- `python-decouple`: Configuration loader
+
+## Execution
+
+Once the environment variables are configured:
+
+```bash
+python main.py
+```
+
+Logs will report:
+- Status of HTTP request
+- Number of rows processed
+- Success/failure of data insertion
+
+## License
+
+This software is provided under the MIT License. Users must independently verify their right to access and use ICE-published data.
+
+## Potential Enhancements
+
+- Add support for historical archiving
+- Store raw HTML snapshots for audit trail
+- Enable alerts on structural changes to the source table
+- Integrate export to cloud storage (e.g., S3, Azure Blob)
