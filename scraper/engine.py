@@ -13,7 +13,7 @@ class Engine:
     def fetch(self, content: str = None) -> pd.DataFrame:
         logger.debug(f"Attempting to fetch content from {self.url}.")
         if not content:
-            content = self.get_content()
+            data = self.get_content()
             logger.debug(
                 f"Successfully fetched content from {self.url}. Now parsing the content."  # noqa: E501
             )
@@ -22,7 +22,7 @@ class Engine:
                 "Successfully loaded the content from the user provided argument. Now parsing the content."  # noqa: E501
             )
 
-        df = self.parse_html(content)
+        df = self.convert_to_df(data)
         logger.debug(f"\n{df}")
         self.validate_data(df)
         logger.info(f"Parsed content from {self.url}. Extracted {len(df)} rows.")
@@ -32,28 +32,28 @@ class Engine:
         try:
             r = self.request.request("GET", self.url)
             r.raise_for_status()
-            return r.text
+            return r.json()
         except requests.RequestException as e:
             logger.error(f"Error fetching content from {self.url}. Error: {e}")
             raise ConnectionError(f"Failed to connect to {self.url}.") from e
 
-    def parse_html(self, content: str) -> pd.DataFrame:
+    def convert_to_df(self, data: list) -> pd.DataFrame:
         try:
-            dfs = pd.read_html(content)
+            df = pd.DataFrame(data)
         except Exception as e:
             logger.error(f"Error parsing HTML via pandas. Error: {e}")
             raise e
 
-        if len(dfs):
+        if len(df):
             logger.debug(
-                f"Successfully parsed content from {self.url}. Extracted {len(dfs[0])} rows."  # noqa: E501
+                f"Successfully parsed content from {self.url}. Extracted {len(df)} rows."  # noqa: E501
             )
-            return dfs[0]
+            return df
         else:
             raise ValueError(f"No data found when parsing content from {self.url}.")
 
     def validate_data(self, df: pd.DataFrame) -> None:
-        if df["Clearing Date"].str.contains("No data found").any() or not len(df):
+        if df["clearingDate"].str.contains("No data found").any() or not len(df):
             logger.error("Data validation failed")
             raise ValueError("No price data provided by the provider as of now.")
 

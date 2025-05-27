@@ -7,16 +7,16 @@ from config import logger
 
 class Agent:
     COLUMNS_NAME = {
-        "Clearing Date": "clearing_date",
-        "Name": "name",
-        "Instrument Name": "instrument_name",
+        "clearingDate": "clearing_date",
+        "name": "name",
+        "instrumentName": "instrument_name",
         "Ticker": "ticker",
         "Tier": "tier",
         "Currency": "currency",
         "Doc Clause": "doc_clause",
         "Fixed Rate": "fixed_rate",
         "Maturity Date": "maturity_date",
-        "EOD Price": "price",
+        "eodPrice": "price",
     }
 
     def __init__(self, df: pd.DataFrame) -> None:
@@ -43,8 +43,8 @@ class Agent:
 
     def parse_date(self) -> None:
         try:
-            self.dataframe["Clearing Date"] = pd.to_datetime(
-                self.dataframe["Clearing Date"], format="%Y-%m-%d"
+            self.dataframe["clearingDate"] = pd.to_datetime(
+                self.dataframe["clearingDate"], format="%Y-%m-%d"
             )
             self.dataframe["Maturity Date"] = pd.to_datetime(
                 self.dataframe["Maturity Date"], format="%Y-%m-%d"
@@ -69,9 +69,7 @@ class Agent:
 
     def brakedown_instrument_name(self) -> None:
         try:
-            df_split = self.dataframe["Instrument Name"].str.split(
-                ".", n=5, expand=True
-            )
+            df_split = self.dataframe["instrumentName"].str.split(".", n=5, expand=True)
             logger.debug(f"\n{df_split}")
             df_split.columns = [
                 "Ticker",
