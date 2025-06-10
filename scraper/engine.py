@@ -9,7 +9,7 @@ class Engine:
 
     URL = "https://www.ice.com/api/cds-settlement-prices/icc-single-names"
 
-    def __init__(self, url: str, max_retries: int, backoff_factor: int) -> None:
+    def __init__(self, max_retries: int, backoff_factor: int) -> None:
         self.request = Request(max_retries=max_retries, backoff_factor=backoff_factor)
 
     def fetch(self, content: str = None) -> pd.DataFrame:
