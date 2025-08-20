@@ -33,13 +33,23 @@ RUN addgroup -S app && adduser -S -h /app -s /usr/sbin/nologin app \
  ####################################################################
 FROM pa-python-odbc
 
+# Python deps
 ADD requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # App code
+<<<<<<< HEAD
 COPY --chown=app:app . .
 
 # switch user
 USER app
+=======
+COPY . .
 
-CMD [ "python", "main.py" ]
+# Non-root user
+RUN useradd -m -r -d /opt/app -s /usr/sbin/nologin client \
+ && chown -R client:client /opt/app
+USER client
+>>>>>>> ce26d07 (Update Dockerfile)
+
+CMD ["python", "main.py"]
